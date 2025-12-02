@@ -5,7 +5,7 @@ import { BlogConfig } from "@/types/config";
 import { PageStatus, PageType, Page } from "@/types/notion";
 import { getPostBlocks } from "@/lib/notion/getPostBlocks";
 import {
-  getConfigPageId,
+  getConfigPageIds,
   getPageIdsInCollection,
 } from "@/lib/notion/getPageIds";
 import { getConfig } from "@/lib/notion/getConfig";
@@ -62,8 +62,8 @@ export async function getWholeSiteData(pageId: string) {
     pageRecordMap.collection_view,
     block.view_ids
   );
-  // 第二个视图为配置页面
-  const configId = getConfigPageId(
+  // Config 视图中所有页面的 ID（可能包含多个，需要找到正确的配置页面）
+  const configPageIds = getConfigPageIds(
     block.collection_id || null,
     pageRecordMap.collection_query,
     pageRecordMap.collection_view
@@ -73,20 +73,23 @@ export async function getWholeSiteData(pageId: string) {
   const navPageList: Page[] = [];
   const allPages: Page[] = [];
   let config: BlogConfig | null = null;
+  let actualConfigPageId: string | null = null;
 
   try {
-    config = await getConfig(configId);
+    const result = await getConfig(configPageIds);
+    config = result.config;
+    actualConfigPageId = result.configPageId;
   } catch (error) {
-    console.error(`获取配置页面失败 ${configId}:`, error);
+    console.error(`获取配置页面失败:`, error);
   }
   if (!config) {
-    console.error(`需要配置Config页面 ${configId}`);
-    throw new Error("获取配置页面失败, config_id: " + configId);
+    console.error(`需要配置Config页面`);
+    throw new Error("获取配置页面失败");
   }
 
   await Promise.all(
     pageIds.map(async (pageId) => {
-      if (configId && pageId === configId) return;
+      if (actualConfigPageId && pageId === actualConfigPageId) return;
 
       try {
         const page = await getPageProperties(pageId, blockMap, schemaMap);
@@ -130,6 +133,6 @@ export async function getWholeSiteData(pageId: string) {
 
 function getLatestPosts(publishedPosts: Page[], latestPostCount: number = 6) {
   return publishedPosts
-    .sort((a, b) => (b.lastEditedTime || b.date) - (a.lastEditedTime || a.date))
+    .sort((a, b) => b.date - a.date)
     .slice(0, latestPostCount);
 }

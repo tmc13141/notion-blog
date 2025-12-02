@@ -108,7 +108,7 @@
   --sidebar: oklch(0.21 0.006 285.885);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.546 0.245 262.881);
-  --sidebar-primary-foreground: oklch(0.379 0.146 265.522);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.274 0.006 286.033);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
@@ -122,6 +122,15 @@
   body {
     @apply bg-background text-foreground;
     transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  }
+
+  /* Inline Code styling for dark mode visibility */
+  code:not([class*="language-"]) {
+    @apply bg-muted px-1.5 py-0.5 rounded font-mono text-sm border border-border/50;
+  }
+
+  .dark code:not([class*="language-"]) {
+    @apply text-primary-foreground bg-primary/20 border-primary/20;
   }
 }
 

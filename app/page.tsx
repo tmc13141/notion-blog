@@ -9,9 +9,7 @@ import { WithContext, ItemList } from "schema-dts";
 export default async function Home() {
   const { latestPosts, config: BlogConfig } = await getSiteData();
 
-  // sort by date
-  latestPosts.sort((a, b) => b.date - a.date);
-
+  // latestPosts 已经按 date 降序排列
   // Only show top 3 posts as features on homepage
   const featurePosts = latestPosts.slice(0, 3);
 

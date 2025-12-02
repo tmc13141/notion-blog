@@ -4,7 +4,10 @@ import { getSiteData } from "@/lib/notion/getSiteData";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteData = await getSiteData();
 
-  const { publishedPosts, config: BlogConfig, tagOptions } = siteData;
+  const { publishedPosts, config: BlogConfig, tagOptions, pages } = siteData;
+
+  const friendsPage = pages.find((page) => page.slug === "friends");
+  const aboutPage = pages.find((page) => page.slug === "about");
 
   const blogPostsSitemap = publishedPosts.map((post) => ({
     url: `${BlogConfig.SITE_URL}/post/${encodeURIComponent(post.slug)}`,
@@ -30,6 +33,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${BlogConfig.SITE_URL}/tag`,
       lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.8,
+    },
+    {
+      url: `${BlogConfig.SITE_URL}/friends`,
+      lastModified: friendsPage
+        ? new Date(friendsPage.lastEditedTime)
+        : new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.8,
+    },
+    {
+      url: `${BlogConfig.SITE_URL}/about`,
+      lastModified: aboutPage ? new Date(aboutPage.lastEditedTime) : new Date(),
       changeFrequency: "daily" as const,
       priority: 0.8,
     },

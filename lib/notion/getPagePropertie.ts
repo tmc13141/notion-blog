@@ -8,6 +8,43 @@ import {
 import { getDateValue, getTextContent } from "notion-utils";
 import { mapImgUrl } from "@/utils/imgProcessing";
 
+/**
+ * 限制 slug 长度以避免文件名过长的问题
+ * Linux 文件名限制为 255 字节，URL 编码后中文字符会变成 9 字节
+ * 为了安全，限制编码后的长度不超过 200 字节
+ */
+const MAX_ENCODED_SLUG_LENGTH = 200;
+
+function normalizeSlug(slug: string, pageId: string): string {
+  if (!slug) return pageId;
+
+  // 检查 URL 编码后的长度
+  const encodedLength = encodeURIComponent(slug).length;
+
+  if (encodedLength <= MAX_ENCODED_SLUG_LENGTH) {
+    return slug;
+  }
+
+  // 如果太长，逐字符截取直到满足长度限制
+  let result = "";
+  for (const char of slug) {
+    const testSlug = result + char;
+    if (encodeURIComponent(testSlug).length > MAX_ENCODED_SLUG_LENGTH) {
+      break;
+    }
+    result = testSlug;
+  }
+
+  // 如果截取后太短（少于 10 个字符），使用 pageId
+  if (result.length < 10) {
+    return pageId;
+  }
+
+  // 添加 pageId 的前 8 位作为唯一标识，避免冲突
+  const shortId = pageId.replace(/-/g, "").slice(0, 8);
+  return `${result}-${shortId}`;
+}
+
 export async function getPageProperties(
   id: string,
   blockMap: BlockMap,
@@ -69,11 +106,11 @@ export async function getPageProperties(
   );
   pageInfo.tags = pageInfo?.tags || [];
 
-  // 处理slug
+  // 处理slug，并限制长度以避免文件名过长
   if (pageInfo.type === PageType.Post) {
-    pageInfo.slug = pageInfo?.slug || pageInfo.id;
+    pageInfo.slug = normalizeSlug(pageInfo?.slug || "", pageInfo.id);
   } else if (pageInfo.type === PageType.Page) {
-    pageInfo.slug = pageInfo.slug ?? pageInfo.id;
+    pageInfo.slug = normalizeSlug(pageInfo.slug ?? "", pageInfo.id);
     if (pageInfo.childrenIds && pageInfo.childrenIds.length > 0) {
       pageInfo.slug = "#";
     }

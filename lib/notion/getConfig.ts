@@ -31,45 +31,118 @@ function getFileValue(property: unknown): string {
   return "";
 }
 
-export async function getConfig(configPageId: string | null) {
-  if (!configPageId) return defaultConfig;
+/**
+ * 检查 schema 是否包含 config 数据库必需的列 (name, value, type)
+ */
+function isConfigSchema(
+  schema: Record<string, { name?: string; type?: string }>
+): boolean {
+  const columnNames = Object.values(schema).map((col) => col.name);
+  return (
+    columnNames.includes("name") &&
+    columnNames.includes("value") &&
+    columnNames.includes("type")
+  );
+}
 
-  // 获取配置页面内容，里面应该有一个Table View的Database
-  const configRecordMap = await getPostBlocks(configPageId);
-  if (!configRecordMap) return defaultConfig;
-  const configBlockMap = configRecordMap.block;
-  const { content } = configBlockMap[configPageId].value;
+interface GetConfigResult {
+  config: BlogConfig;
+  configPageId: string | null;
+}
 
-  if (!content) return defaultConfig;
-
-  // 获取配置表格ID
-  const configTableId = content.find((contentId) => {
-    return configBlockMap[contentId].value.type === "collection_view";
-  });
-
-  if (!configTableId) return defaultConfig;
-
-  // 获取配置表格内容
-  const configBlock = configBlockMap[configTableId].value;
-
-  if (
-    configBlock.type !== "collection_view" &&
-    configBlock.type !== "collection_view_page"
-  ) {
-    console.error(`页面ID: ${configPageId}不是一个数据库`);
-    return defaultConfig;
+/**
+ * 从多个候选页面中找到包含配置数据库的页面并解析配置
+ * @param configPageIds Config 视图中所有页面的 ID
+ */
+export async function getConfig(
+  configPageIds: string[]
+): Promise<GetConfigResult> {
+  if (!configPageIds || configPageIds.length === 0) {
+    return { config: defaultConfig, configPageId: null };
   }
 
-  // 获取配置表格的Collection ID和表格的Schema
-  const collectionId = configBlock.collection_id as string;
-  const { schema } = configRecordMap.collection[collectionId].value;
+  // 遍历所有候选页面，找到包含 name/value/type 列的配置数据库
+  for (const configPageId of configPageIds) {
+    const result = await tryGetConfigFromPage(configPageId);
+    if (result) {
+      return { config: result.config, configPageId };
+    }
+  }
+
+  // 未找到配置数据库，使用默认配置
+  return { config: defaultConfig, configPageId: null };
+}
+
+/**
+ * 尝试从单个页面中获取配置
+ * 如果页面包含有效的配置数据库，返回解析后的配置；否则返回 null
+ */
+async function tryGetConfigFromPage(
+  configPageId: string
+): Promise<{ config: BlogConfig } | null> {
+  // 获取配置页面内容，里面应该有一个Table View的Database
+  const configRecordMap = await getPostBlocks(configPageId);
+  if (!configRecordMap) return null;
+
+  const configBlockMap = configRecordMap.block;
+  const pageBlock = configBlockMap[configPageId]?.value;
+  if (!pageBlock) return null;
+
+  const { content } = pageBlock;
+  if (!content) return null;
+
+  // 获取所有 collection_view 类型的 block
+  const collectionViewIds = content.filter((contentId) => {
+    const block = configBlockMap[contentId]?.value;
+    return (
+      block?.type === "collection_view" ||
+      block?.type === "collection_view_page"
+    );
+  });
+
+  if (collectionViewIds.length === 0) return null;
+
+  // 找到包含 name, value, type 列的配置数据库
+  let configTableId: string | null = null;
+  let schema: Record<string, { name?: string; type?: string }> | null = null;
+  let collectionId: string | null = null;
+
+  for (const tableId of collectionViewIds) {
+    const block = configBlockMap[tableId].value as {
+      collection_id?: string;
+      view_ids?: string[];
+    };
+    const colId = block.collection_id;
+    if (!colId) continue;
+
+    const collection = configRecordMap.collection[colId];
+    if (!collection?.value?.schema) continue;
+
+    const tableSchema = collection.value.schema;
+    if (isConfigSchema(tableSchema)) {
+      configTableId = tableId;
+      collectionId = colId;
+      schema = tableSchema;
+      break;
+    }
+  }
+
+  if (!configTableId || !schema || !collectionId) {
+    // 该页面没有配置数据库
+    return null;
+  }
+
+  // 获取配置表格内容
+  const configBlock = configBlockMap[configTableId].value as {
+    view_ids?: string[];
+  };
 
   // 获取所有配置项的ID
   const configIds = getPageIdsInCollection(
     collectionId,
     configRecordMap.collection_query,
     configRecordMap.collection_view,
-    configBlock.view_ids
+    configBlock.view_ids || []
   );
 
   const config: Partial<BlogConfig> = {};
@@ -87,6 +160,7 @@ export async function getConfig(configPageId: string | null) {
   configIds.forEach((id) => {
     const block = configBlockMap[id].value;
     const { properties } = block;
+
     const tempConfigItem: {
       name: string;
       value: string;
@@ -112,9 +186,9 @@ export async function getConfig(configPageId: string | null) {
      * ["Visit Notion", [['a', 'https://notion.so'], ['h', 'blue']]] 带链接和颜色的文本
      */
     Object.entries<Decoration[]>(properties).forEach(([key, value]) => {
-      if (!schema[key]) return;
+      if (!schema![key]) return;
       // 配置项名称
-      const { name } = schema[key];
+      const { name } = schema![key];
       // 获取未格式化的文本内容
       const content = getTextContent(value);
 
@@ -174,7 +248,9 @@ export async function getConfig(configPageId: string | null) {
 
   // 合并默认配置和获取的配置
   return {
-    ...defaultConfig,
-    ...config,
+    config: {
+      ...defaultConfig,
+      ...config,
+    },
   };
 }

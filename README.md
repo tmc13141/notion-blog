@@ -57,11 +57,11 @@
 6. 也推荐使用 Cloudflare Workers 部署（免费额度更慷慨），但是想要自定义域名的话，需要把域名，托管在 Cloudflare 上
 
    - 注册 Cloudflare 账号
-   - 前往 `Workers & Pages` 页面，点击`Create Application
+   - 前往 `Workers & Pages` 页面，点击`Create Application`
    - 选择 `Continue with Github` 并授权
    - 选择 `Import from GitHub` 并选择你的仓库
    - 填写相应字段
-     - `Project name`: 随便去一个
+     - `Project name`: 随便取一个
      - `Build command`: 删除掉，留空
      - `Deploy command`：`pnpm run deploy`
    - 点击 `Deploy`

@@ -29,18 +29,25 @@ export function getPageIdsInCollection(
   return Array.from(pageIds);
 }
 
-export function getConfigPageId(
+/**
+ * 获取 Config 视图中所有页面的 ID
+ * 返回数组而不是单个 ID，因为 Config 视图可能包含多个页面
+ */
+export function getConfigPageIds(
   collectionId: string | null,
   collectionQuery: Query,
   collectionView: CollectionViewMap
-) {
-    if (!collectionId || !collectionView) return null;
+): string[] {
+  if (!collectionId || !collectionView) return [];
 
-    for (const view of Object.values(collectionView)) {
-        if (view.value.name === CONFIG_PAGE_NAME) {
-            return collectionQuery[collectionId][view.value.id].collection_group_results?.blockIds[0] || null;
-        }
+  for (const view of Object.values(collectionView)) {
+    if (view.value.name === CONFIG_PAGE_NAME) {
+      return (
+        collectionQuery[collectionId][view.value.id].collection_group_results
+          ?.blockIds || []
+      );
     }
+  }
 
-    return null;
+  return [];
 }
