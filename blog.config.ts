@@ -13,7 +13,7 @@ export default blogConfig({
   HERO_WORDS1: "一名人类",
   HERO_WORDS2: "也是Web开发工程师",
   EMAIL: "example@emial.com",
-  GITHUB: "https://github.com/example",
+  GITHUB: "https://github.com/tmc13141/notion-blog",
 
   POSTS_PER_PAGE: 12,
 
