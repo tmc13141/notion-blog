@@ -60,7 +60,12 @@ export function Navigation() {
   );
 }
 
-export function MobileNavigation({ children }: { children?: React.ReactNode }) {
+export function MobileNavigation({
+  search,
+}: {
+  children?: React.ReactNode;
+  search?: React.ReactNode;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
@@ -85,13 +90,23 @@ export function MobileNavigation({ children }: { children?: React.ReactNode }) {
   const menu = (
     <div
       className={cn(
-        "fixed inset-0 z-[49] bg-background/95 backdrop-blur-xl pt-24 px-6 transition-all duration-500 ease-in-out origin-top md:hidden",
+        "fixed inset-0 z-[49] bg-background/95 backdrop-blur-xl transition-all duration-500 ease-in-out origin-top md:hidden flex flex-col",
         isOpen
           ? "opacity-100 visible translate-y-0"
           : "opacity-0 invisible -translate-y-4"
       )}
     >
-      <nav className="flex flex-col gap-2 items-center text-center">
+      {/* Header Area within Menu - Spacer for top bar items */}
+      <div className="h-[72px] w-full shrink-0" />
+
+      <div className="px-6 py-2">
+        {/* Search Bar Area - Prominent */}
+        <div className="w-full" onClick={() => setIsOpen(false)}>
+          {search}
+        </div>
+      </div>
+
+      <nav className="flex flex-col gap-2 items-center text-center mt-8 flex-1">
         {navigationItems.map((item, index) => {
           const isActive =
             pathname === item.href ||
@@ -104,7 +119,7 @@ export function MobileNavigation({ children }: { children?: React.ReactNode }) {
                 "transform transition-all duration-500 ease-out w-full",
                 isOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
               )}
-              style={{ transitionDelay: `${index * 50}ms` }}
+              style={{ transitionDelay: `${index * 50 + 100}ms` }}
             >
               <Link
                 href={item.href}
@@ -123,31 +138,25 @@ export function MobileNavigation({ children }: { children?: React.ReactNode }) {
         })}
       </nav>
 
-      {/* Inject children (Search/Theme) into the menu with delay */}
-      <div
-        className={cn(
-          "transform transition-all duration-700 ease-out",
-          isOpen ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-        )}
-        style={{ transitionDelay: "300ms" }}
-      >
-        {children}
+      {/* Footer Area */}
+      <div className="p-8 pb-24 text-center text-muted-foreground text-sm opacity-50">
+        {/* Extra footer content if needed */}
       </div>
     </div>
   );
 
   return (
-    <div className="md:hidden">
+    <div className="md:hidden flex items-center justify-center">
       <Button
         variant="ghost"
         size="icon"
-        className="relative z-50 hover:bg-transparent"
+        className="relative z-50 hover:bg-transparent flex items-center justify-center"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="relative size-6">
           <X
             className={cn(
-              "absolute inset-0 transition-all duration-300 ease-in-out",
+              "absolute inset-0 transition-all duration-300 ease-in-out m-auto",
               isOpen
                 ? "rotate-0 opacity-100 scale-100"
                 : "-rotate-90 opacity-0 scale-0"
@@ -155,7 +164,7 @@ export function MobileNavigation({ children }: { children?: React.ReactNode }) {
           />
           <Menu
             className={cn(
-              "absolute inset-0 transition-all duration-300 ease-in-out",
+              "absolute inset-0 transition-all duration-300 ease-in-out m-auto",
               isOpen
                 ? "rotate-90 opacity-0 scale-0"
                 : "rotate-0 opacity-100 scale-100"
