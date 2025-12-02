@@ -8,7 +8,7 @@ export default blogConfig({
   AUTHOR: "汤老丝",
   SITE_URL: "mcrj.xyz",
   BLOG_TITLE: "汤老丝博客",
-  BLOG_DESCRIPTION: "This is a blog",
+  BLOG_DESCRIPTION: "分享资源/写作笔记",
   BLOG_KEYWORDS: "blog,notion",
   HERO_WORDS1: "一名人类",
   HERO_WORDS2: "也是Web开发工程师",
