@@ -2,10 +2,10 @@ import { blogConfig } from "@/types/config";
 
 export default blogConfig({
   NOTION_PAGE_ID:
-    process.env.NOTION_PAGE_ID || "1be1f833110780d98383fc637676cee8",
+    process.env.NOTION_PAGE_ID || "2bdbc245dc9481ff91ebdc47ad3db8d5",
   NEXT_REVALIDATE_SECONDS: 60, // 缓存时间（秒）
 
-  AUTHOR: "Zephyrrr",
+  AUTHOR: "汤老丝",
   SITE_URL: "https://www.example.com",
   BLOG_TITLE: "This is a blog",
   BLOG_DESCRIPTION: "This is a blog",
