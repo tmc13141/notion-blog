@@ -6,8 +6,8 @@ export default blogConfig({
   NEXT_REVALIDATE_SECONDS: 60, // 缓存时间（秒）
 
   AUTHOR: "汤老丝",
-  SITE_URL: "https://www.example.com",
-  BLOG_TITLE: "This is a blog",
+  SITE_URL: "mcrj.xyz",
+  BLOG_TITLE: "汤老丝博客",
   BLOG_DESCRIPTION: "This is a blog",
   BLOG_KEYWORDS: "blog,notion",
   HERO_WORDS1: "一名人类",
