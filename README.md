@@ -54,16 +54,21 @@
    - 选择你的项目，然后点击 `Deploy` 按钮
    - 等待部署完成
 
-6. 也推荐使用 Cloudflare Workers 部署（免费额度更慷慨），但是想要自定义域名的话，需要把域名，托管在 Cloudflare 上
+6. 也推荐使用 Cloudflare Workers 部署（免费额度更慷慨），但是想要自定义域名的话，需要把域名，托管在 Cloudflare 上：
 
+   - Fork 本项目
    - 注册 Cloudflare 账号
    - 前往 `Workers & Pages` 页面，点击`Create Application`
    - 选择 `Continue with Github` 并授权
    - 选择 `Import from GitHub` 并选择你的仓库
    - 填写相应字段
-     - `Project name`: 随便取一个
+     - `Project name`: notion-blog (必须和 wrangler.json 中的 name 一致)
      - `Build command`: 删除掉，留空
      - `Deploy command`：`pnpm run deploy`
+     - 展开`Advanced`选项，配置构建时环境变量
+       - `Variable name`: `NOTION_PAGE_ID`
+       - `Variable value`: 你的 Notion 数据库 ID
+     - 注意：在 Cloudflare 中我们使用了 KV 作为缓存，所以它会在每次部署时自动创建一个 KV 空间，所以你不需要手动创建 KV 空间。
    - 点击 `Deploy`
    - 前往部署好的仪表盘页面的`Settings` -> `Variables and Secrets`, 新增环境变量 `NOTION_PAGE_ID`，再次部署
    - 关于自定义域名有两种设置方式
@@ -102,6 +107,39 @@
 - `NEXT_REVALIDATE_SECONDS` 是 ISR 的缓存时间，默认是 60 秒，通俗的讲就是每隔 60 秒会重新生成一次静态页面
 
 其余 Notion 上的配置项都挺好理解的，这里就不赘述了
+
+## 缓存机制说明
+
+为了提供更快的访问速度和更低的服务器成本，博客使用了多层缓存机制。以下是一些你可能会注意到的行为：
+
+### 内容更新延迟
+
+当你在 Notion 中修改文章后，网站上的内容**不会立即更新**。默认情况下，需要等待约 **1 分钟**（由 `NEXT_REVALIDATE_SECONDS` 控制）后，下一次访问才会看到最新内容。
+
+这是正常现象，不是 Bug ✅
+
+### 新文章可见性
+
+当你在 Notion 中新增一篇文章：
+
+1. **文章页面**：新文章几乎可以**立即访问**（通过直接链接）
+2. **文章列表**：需要等待缓存刷新（约 1 分钟）后才会显示在首页和列表页
+3. **搜索功能**：新文章可以**立即通过标题和标签搜索到**，但全文搜索需要等待缓存刷新
+
+### 搜索功能说明
+
+博客的搜索功能会预先建立搜索索引以提供快速响应：
+
+- **可搜索内容**：文章标题、标签、摘要、正文内容
+- **首次搜索**：部署后的第一次搜索可能稍慢（约 1-2 秒），因为需要构建索引
+- **后续搜索**：毫秒级响应
+
+### 如何加快更新？
+
+如果你需要立即看到更新，可以：
+
+1. **重新部署**：在 Vercel/Cloudflare 后台手动触发重新部署
+2. **调整缓存时间**：将 `NEXT_REVALIDATE_SECONDS` 设置为更小的值（注意：可能增加 API 调用次数）
 
 ## 感谢
 

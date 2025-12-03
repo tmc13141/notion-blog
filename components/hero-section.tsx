@@ -1,9 +1,9 @@
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getSiteConfig } from "@/lib/notion/getSiteData";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export async function HeroSection() {
-  const { config: BlogConfig } = await getSiteData();
+  const BlogConfig = await getSiteConfig();
   const greeting = `你好，我是`;
   const description = BlogConfig.HERO_WORDS1;
   const subDescription = BlogConfig.HERO_WORDS2;

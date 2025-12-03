@@ -1,13 +1,15 @@
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getPostList, getSiteConfig } from "@/lib/notion/getSiteData";
 import BlogList from "@/components/blog-list";
 import { notFound } from "next/navigation";
 import PostPagination from "@/components/post-pagination";
 
 export async function generateStaticParams() {
-  const siteData = await getSiteData();
-  const { publishedPosts, config } = siteData;
+  const [{ posts }, config] = await Promise.all([
+    getPostList(),
+    getSiteConfig(),
+  ]);
 
-  const totalPages = Math.ceil(publishedPosts.length / config.POSTS_PER_PAGE);
+  const totalPages = Math.ceil(posts.length / config.POSTS_PER_PAGE);
 
   return Array.from({ length: totalPages }, (_, i) => ({
     page: (i + 1).toString(),
@@ -27,16 +29,17 @@ export default async function Page({
 
   const pageNumber = parseInt(page, 10);
 
-  const { publishedPosts, config, tagOptions } = await getSiteData();
+  const [{ posts: publishedPosts, tagOptions }, config] = await Promise.all([
+    getPostList(),
+    getSiteConfig(),
+  ]);
   const totalPages = Math.ceil(publishedPosts.length / config.POSTS_PER_PAGE);
 
   if (pageNumber > totalPages || pageNumber < 1) {
     return notFound();
   }
 
-  // sort by date
-  publishedPosts.sort((a, b) => b.date - a.date);
-
+  // publishedPosts 已经按 date 降序排列，无需再排序
   const posts = publishedPosts.slice(
     (pageNumber - 1) * config.POSTS_PER_PAGE,
     pageNumber * config.POSTS_PER_PAGE

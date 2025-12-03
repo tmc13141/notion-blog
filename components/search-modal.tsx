@@ -171,17 +171,21 @@ export default function SearchModal({
   };
 
   const highlightText = (text: string, keyword: string) => {
-    if (!keyword) return text;
-    const regex = new RegExp(`(${keyword})`, "gi");
+    if (!keyword || !text) return text;
+
+    // 转义正则特殊字符
+    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escapedKeyword})`, "gi");
     const parts = text.split(regex);
+
     return parts.map((part, index) =>
-      regex.test(part) ? (
-        <span
+      part.toLowerCase() === keyword.toLowerCase() ? (
+        <mark
           key={index}
-          className="bg-yellow-500/30 text-yellow-600 dark:text-yellow-400 rounded px-0.5 font-medium"
+          className="bg-yellow-400/40 dark:bg-yellow-500/30 text-yellow-700 dark:text-yellow-300 rounded-sm px-0.5 font-semibold"
         >
           {part}
-        </span>
+        </mark>
       ) : (
         part
       )
@@ -286,10 +290,20 @@ export default function SearchModal({
                       )}
                     </div>
 
-                    <div className="flex flex-1 flex-col justify-center gap-1.5 overflow-hidden min-h-[3.5rem]">
+                    <div className="flex flex-1 flex-col justify-center gap-1 overflow-hidden min-h-[3.5rem]">
                       <h4 className="line-clamp-1 text-sm font-medium text-foreground">
                         {highlightText(post.title, keyword)}
                       </h4>
+
+                      {/* 显示匹配的内容片段 */}
+                      {keyword &&
+                        post.searchResults &&
+                        post.searchResults.length > 0 && (
+                          <p className="line-clamp-2 text-xs text-muted-foreground/80 leading-relaxed">
+                            {highlightText(post.searchResults[0], keyword)}
+                          </p>
+                        )}
+
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1 bg-muted/50 px-1.5 py-0.5 rounded text-[10px]">
                           <Calendar className="size-3" />
@@ -297,7 +311,7 @@ export default function SearchModal({
                         </span>
                         {post.tags?.[0] && (
                           <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[10px]">
-                            #{post.tags[0]}
+                            #{highlightText(post.tags[0], keyword)}
                           </span>
                         )}
                       </div>

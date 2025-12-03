@@ -1,23 +1,26 @@
 import type { MetadataRoute } from "next";
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getPostList, getSiteConfig, getNavPages } from "@/lib/notion/getSiteData";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteData = await getSiteData();
-
-  const { publishedPosts, config: BlogConfig, tagOptions, pages } = siteData;
+  // 并行获取需要的数据
+  const [{ posts, tagOptions }, config, pages] = await Promise.all([
+    getPostList(),
+    getSiteConfig(),
+    getNavPages(),
+  ]);
 
   const friendsPage = pages.find((page) => page.slug === "friends");
   const aboutPage = pages.find((page) => page.slug === "about");
 
-  const blogPostsSitemap = publishedPosts.map((post) => ({
-    url: `${BlogConfig.SITE_URL}/post/${encodeURIComponent(post.slug)}`,
+  const blogPostsSitemap = posts.map((post) => ({
+    url: `${config.SITE_URL}/post/${encodeURIComponent(post.slug)}`,
     lastModified: new Date(post.lastEditedTime),
     changeFrequency: "daily" as const,
     priority: 1,
   }));
 
   const tagSitemap = tagOptions.map((tag) => ({
-    url: `${BlogConfig.SITE_URL}/tag/${encodeURIComponent(tag.name)}`,
+    url: `${config.SITE_URL}/tag/${encodeURIComponent(tag.name)}`,
     lastModified: new Date(),
     changeFrequency: "daily" as const,
     priority: 0.8,
@@ -25,19 +28,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     {
-      url: BlogConfig.SITE_URL,
+      url: config.SITE_URL,
       lastModified: new Date(),
       changeFrequency: "daily" as const,
       priority: 1,
     },
     {
-      url: `${BlogConfig.SITE_URL}/tag`,
+      url: `${config.SITE_URL}/tag`,
       lastModified: new Date(),
       changeFrequency: "daily" as const,
       priority: 0.8,
     },
     {
-      url: `${BlogConfig.SITE_URL}/friends`,
+      url: `${config.SITE_URL}/friends`,
       lastModified: friendsPage
         ? new Date(friendsPage.lastEditedTime)
         : new Date(),
@@ -45,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
-      url: `${BlogConfig.SITE_URL}/about`,
+      url: `${config.SITE_URL}/about`,
       lastModified: aboutPage ? new Date(aboutPage.lastEditedTime) : new Date(),
       changeFrequency: "daily" as const,
       priority: 0.8,

@@ -1,8 +1,8 @@
 import Head from "next/head";
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getSiteConfig } from "@/lib/notion/getSiteData";
 
 export default async function MetaHead() {
-  const { config: BlogConfig } = await getSiteData();
+  const BlogConfig = await getSiteConfig();
 
   return (
     <Head>

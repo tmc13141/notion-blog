@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getPostList, getSiteConfig } from "@/lib/notion/getSiteData";
 import PostPagination from "@/components/post-pagination";
 import BlogList from "@/components/blog-list";
 
@@ -17,8 +17,7 @@ export async function generateMetadata({
 }
 
 export async function generateStaticParams() {
-  const siteData = await getSiteData();
-  const { tagOptions } = siteData;
+  const { tagOptions } = await getPostList();
   return tagOptions.map((tag) => ({ tag: encodeURIComponent(tag.name) }));
 }
 
@@ -37,11 +36,13 @@ export default async function TagPage({
     return notFound();
   }
 
-  const siteData = await getSiteData();
-  const { publishedPosts, config } = siteData;
+  const [{ posts: publishedPosts }, config] = await Promise.all([
+    getPostList(),
+    getSiteConfig(),
+  ]);
 
-  const sortedPosts = publishedPosts.sort((a, b) => b.date - a.date);
-  const filteredPosts = sortedPosts.filter((post) =>
+  // publishedPosts 已经按 date 降序排列
+  const filteredPosts = publishedPosts.filter((post) =>
     post.tags.includes(decodeURIComponent(tag))
   );
   const totalPages = Math.ceil(filteredPosts.length / config.POSTS_PER_PAGE);

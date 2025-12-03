@@ -5,7 +5,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import MetaHead from "@/components/metahead";
 import GoToTop from "@/components/go-to-top";
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getSiteConfig } from "@/lib/notion/getSiteData";
 import { Blog, WithContext } from "schema-dts";
 
 const inter = Inter({
@@ -22,7 +22,7 @@ const noto_sans_sc = Noto_Sans_SC({
 });
 
 export async function generateMetadata() {
-  const { config: BlogConfig } = await getSiteData();
+  const BlogConfig = await getSiteConfig();
 
   // 动态 favicon 配置
   const icons = BlogConfig.FAVICON
@@ -48,7 +48,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { config: BlogConfig } = await getSiteData();
+  const BlogConfig = await getSiteConfig();
 
   const blog: WithContext<Blog> = {
     "@context": "https://schema.org",

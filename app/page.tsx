@@ -1,4 +1,4 @@
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getPostList, getSiteConfig } from "@/lib/notion/getSiteData";
 import FeaturePostList from "@/components/feature-post-list";
 import { HeroSection } from "@/components/hero-section";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,14 @@ import { ArrowRight } from "lucide-react";
 import { WithContext, ItemList } from "schema-dts";
 
 export default async function Home() {
-  const { latestPosts, config: BlogConfig } = await getSiteData();
+  // 使用独立的数据获取函数，减少不必要的数据加载
+  const [{ posts }, config] = await Promise.all([
+    getPostList(),
+    getSiteConfig(),
+  ]);
 
-  // latestPosts 已经按 date 降序排列
-  // Only show top 3 posts as features on homepage
+  // posts 已经按 date 降序排列
+  const latestPosts = posts.slice(0, 6);
   const featurePosts = latestPosts.slice(0, 3);
 
   const blog: WithContext<ItemList> = {
@@ -23,12 +27,12 @@ export default async function Home() {
         "@type": "BlogPosting",
         author: {
           "@type": "Person",
-          name: BlogConfig.AUTHOR,
-          url: BlogConfig.SITE_URL,
+          name: config.AUTHOR,
+          url: config.SITE_URL,
         },
         headline: page.title,
         image: page.pageCover,
-        url: `${BlogConfig.SITE_URL}/post/${encodeURIComponent(page.slug)}`,
+        url: `${config.SITE_URL}/post/${encodeURIComponent(page.slug)}`,
         datePublished: new Date(page.date).toISOString(),
         dateModified: new Date(page.lastEditedTime).toISOString(),
       },
@@ -54,7 +58,10 @@ export default async function Home() {
             </p>
           </div>
           <Link href="/blog/1">
-            <Button variant="outline" className="rounded-full group cursor-pointer">
+            <Button
+              variant="outline"
+              className="rounded-full group cursor-pointer"
+            >
               查看所有文章
               <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
             </Button>

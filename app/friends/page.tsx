@@ -1,5 +1,5 @@
 import { getPostBlocks } from "@/lib/notion/getPostBlocks";
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getNavPages, getSiteConfig } from "@/lib/notion/getSiteData";
 import { getFriendLinks } from "@/lib/notion/getFriendLinks";
 import { NotionPage } from "@/components/notion/notion-page";
 import { notFound } from "next/navigation";
@@ -8,7 +8,10 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { pages, config } = await getSiteData();
+  const [pages, config] = await Promise.all([
+    getNavPages(),
+    getSiteConfig(),
+  ]);
   const friendsPage = pages.find((page) => page.slug === "friends");
 
   if (!friendsPage) {
@@ -30,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FriendsPage() {
-  const { pages } = await getSiteData();
+  const pages = await getNavPages();
   const friendsPage = pages.find((page) => page.slug === "friends");
 
   if (!friendsPage) return notFound();

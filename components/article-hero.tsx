@@ -31,7 +31,7 @@ export default function ArticleHero({
           </div>
         </div>
 
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
+        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight break-words hyphens-auto">
           {title}
         </h1>
 

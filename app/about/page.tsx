@@ -1,11 +1,14 @@
 import { getPostBlocks } from "@/lib/notion/getPostBlocks";
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getNavPages, getSiteConfig } from "@/lib/notion/getSiteData";
 import { NotionPage } from "@/components/notion/notion-page";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { pages, config } = await getSiteData();
+  const [pages, config] = await Promise.all([
+    getNavPages(),
+    getSiteConfig(),
+  ]);
   const aboutPage = pages.find((page) => page.slug === "about");
 
   if (!aboutPage) {
@@ -27,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const { pages } = await getSiteData();
+  const pages = await getNavPages();
   const aboutPage = pages.find((page) => page.slug === "about");
 
   if (!aboutPage) return notFound();

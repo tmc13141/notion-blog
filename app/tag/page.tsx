@@ -1,4 +1,4 @@
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getPostList } from "@/lib/notion/getSiteData";
 import { Metadata } from "next";
 import { TagCloud } from "@/components/tag-cloud";
 
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TagPage() {
-  const { tagOptions } = await getSiteData();
+  const { tagOptions } = await getPostList();
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 pt-32 pb-12 md:pt-40 md:pb-24 min-h-screen flex flex-col justify-center items-center gap-12">

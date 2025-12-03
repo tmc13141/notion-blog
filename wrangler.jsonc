@@ -10,10 +10,15 @@
         "directory": ".open-next/assets",
         "binding": "ASSETS"
     },
+    "kv_namespaces": [
+        {
+            "binding": "BLOG_CACHE",
+        }
+    ],
     "observability": {
         "enabled": true
     },
-    "keep_vars": true,
+    "keep_vars": true
     // "routes": [
     //     {
     //         "pattern": "www.yourdomain.com",

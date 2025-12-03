@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Github, Mail } from "lucide-react";
-import { getSiteData } from "@/lib/notion/getSiteData";
+import { getSiteConfig } from "@/lib/notion/getSiteData";
 
 export default async function Footer() {
-  const { config: BlogConfig } = await getSiteData();
+  const BlogConfig = await getSiteConfig();
 
   return (
     <footer className="w-full border-t bg-background mt-auto">

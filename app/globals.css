@@ -108,7 +108,7 @@
   --sidebar: oklch(0.21 0.006 285.885);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.546 0.245 262.881);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.379 0.146 265.522);
   --sidebar-accent: oklch(0.274 0.006 286.033);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
@@ -122,6 +122,8 @@
   body {
     @apply bg-background text-foreground;
     transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+    overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+    width: 100%;
   }
 
   /* Inline Code styling for dark mode visibility */
@@ -131,6 +133,17 @@
 
   .dark code:not([class*="language-"]) {
     @apply text-primary-foreground bg-primary/20 border-primary/20;
+  }
+
+  /* Fix Notion code block scrolling */
+  .notion-code {
+    overflow-x: auto;
+  }
+
+  /* Ensure images don't overflow */
+  .notion-asset-wrapper img {
+    max-width: 100%;
+    height: auto;
   }
 }
 
