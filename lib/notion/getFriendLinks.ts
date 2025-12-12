@@ -162,11 +162,11 @@ export function getFriendLinks(blockMap: ExtendedRecordMap): FriendLinksResult {
       }
     }
 
-    // 如果没有上传头像，使用 favicon.im 作为 fallback
+    // 如果没有上传头像，使用 Google Favicon 服务作为 fallback，并请求较大尺寸
     if (!avatar && normalizedUrl) {
       try {
         const domain = new URL(normalizedUrl).hostname;
-        avatar = `https://favicon.im/${domain}`;
+        avatar = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
       } catch {
         // URL 解析失败，忽略
       }

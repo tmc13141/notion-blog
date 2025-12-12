@@ -7,21 +7,13 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 /**
- * KV TTL 乘数
- * KV 缓存时间 = ISR revalidate 时间 × KV_TTL_MULTIPLIER
+ * KV 存储乘数
+ * KV 存储时间 = ISR revalidate 时间 × KV_STORAGE_MULTIPLIER
  *
- * 为什么需要这个？
- * - ISR 页面缓存 60 秒后过期，触发后台重新生成
- * - 如果 KV 也是 60 秒，重新生成时 KV 也过期了 → 必须调用 Notion API
- * - 设置 KV TTL 为 3 倍，这样 ISR 重新生成时 KV 还有效 → KV HIT，省掉 API 调用
- *
- * 示例：ISR=60s, KV_TTL_MULTIPLIER=3
- * - 0-60s: 两个缓存都有效
- * - 60s: ISR 过期，重新生成，KV 还有效 → KV HIT ✅
- * - 120s: ISR 过期，重新生成，KV 还有效 → KV HIT ✅
- * - 180s: ISR 过期，KV 也过期 → 调用 Notion API
+ * 这个乘数只影响 KV 的物理存储时间，不影响数据的"新鲜度"判断
+ * 目的是防止 KV 在我们判断数据是否过期之前就把数据删掉了
  */
-export const KV_TTL_MULTIPLIER = 3;
+const KV_STORAGE_MULTIPLIER = 2;
 
 export interface CacheEntry<T> {
   data: T;
@@ -61,8 +53,10 @@ async function getKV(): Promise<KVNamespace | null> {
 export const kvCache = {
   /**
    * 从 KV 获取数据
+   * @param key - 缓存键
+   * @param expectedTtl - 期望的数据新鲜度（秒），超过这个时间的数据视为过期
    */
-  async get<T>(key: string): Promise<T | null> {
+  async get<T>(key: string, expectedTtl?: number): Promise<T | null> {
     const startTime = performance.now();
 
     try {
@@ -72,16 +66,23 @@ export const kvCache = {
       const value = await kv.get(key, "json");
       if (value) {
         const entry = value as CacheEntry<T>;
-        // 检查是否过期
-        if (Date.now() - entry.timestamp < entry.ttl * 1000) {
+        const age = Date.now() - entry.timestamp;
+        // 使用传入的 expectedTtl 或存储的 ttl 来判断新鲜度
+        const maxAge = (expectedTtl || entry.ttl) * 1000;
+
+        if (age < maxAge) {
           console.log(
-            `[KV Cache HIT] ${key} (${(performance.now() - startTime).toFixed(
-              2
-            )}ms)`
+            `[KV Cache HIT] ${key} age=${Math.round(age / 1000)}s/${Math.round(
+              maxAge / 1000
+            )}s (${(performance.now() - startTime).toFixed(2)}ms)`
           );
           return entry.data;
         }
-        console.log(`[KV Cache EXPIRED] ${key}`);
+        console.log(
+          `[KV Cache STALE] ${key} age=${Math.round(
+            age / 1000
+          )}s > ${Math.round(maxAge / 1000)}s`
+        );
       }
     } catch (error) {
       console.error(`[KV Cache ERROR] get ${key}:`, error);
@@ -95,7 +96,7 @@ export const kvCache = {
 
   /**
    * 写入数据到 KV
-   * @param ttl - ISR revalidate 时间（秒），KV 实际 TTL = ttl × KV_TTL_MULTIPLIER
+   * @param ttl - 数据新鲜度时间（秒），KV 存储时间会稍长以防止过早删除
    */
   async set<T>(key: string, data: T, ttl: number): Promise<boolean> {
     const startTime = performance.now();
@@ -104,21 +105,22 @@ export const kvCache = {
       const kv = await getKV();
       if (!kv) return false;
 
-      // KV TTL = ISR revalidate × 乘数，确保 ISR 重新生成时 KV 还有效
-      const actualTtl = ttl * KV_TTL_MULTIPLIER;
-
       const entry: CacheEntry<T> = {
         data,
         timestamp: Date.now(),
-        ttl: actualTtl,
+        ttl: ttl, // 存储原始 TTL 用于新鲜度判断
       };
+
+      // KV 物理存储时间比新鲜度时间长，防止数据被过早删除
       // KV 的 expirationTtl 必须至少 60 秒
-      const kvTtl = Math.max(actualTtl, 60);
+      const storageTtl = Math.max(ttl * KV_STORAGE_MULTIPLIER, 60);
+
       await kv.put(key, JSON.stringify(entry), {
-        expirationTtl: kvTtl,
+        expirationTtl: storageTtl,
       });
+
       console.log(
-        `[KV Cache SET] ${key} ttl=${actualTtl}s (${(
+        `[KV Cache SET] ${key} freshness=${ttl}s storage=${storageTtl}s (${(
           performance.now() - startTime
         ).toFixed(2)}ms)`
       );

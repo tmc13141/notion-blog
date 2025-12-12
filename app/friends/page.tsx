@@ -8,10 +8,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [pages, config] = await Promise.all([
-    getNavPages(),
-    getSiteConfig(),
-  ]);
+  const [pages, config] = await Promise.all([getNavPages(), getSiteConfig()]);
   const friendsPage = pages.find((page) => page.slug === "friends");
 
   if (!friendsPage) {
@@ -104,10 +101,10 @@ export default async function FriendsPage() {
                   alt={friend.name}
                   width={56}
                   height={56}
-                  className="rounded-full object-cover flex-shrink-0 ring-2 ring-border group-hover:ring-primary/20 transition-all"
+                  className="rounded-xl object-cover flex-shrink-0 transition-all"
                 />
               ) : (
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 ring-2 ring-border">
+                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xl font-bold text-primary">
                     {friend.name.charAt(0).toUpperCase()}
                   </span>

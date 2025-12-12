@@ -1,7 +1,7 @@
 import { type ExtendedRecordMap } from "@/types/notion";
 import { wait } from "@/utils";
 import { notionAPI } from "@/lib/notion/notionAPI";
-import { timedCache, cpuTimer } from "@/lib/cache";
+import { timedCache } from "@/lib/cache";
 import blogConfig from "@/blog.config";
 
 /**
@@ -13,8 +13,6 @@ export async function getPostBlocks(
   id: string,
   slice?: number
 ): Promise<ExtendedRecordMap> {
-  const timer = cpuTimer(`getPostBlocks:${id.slice(0, 8)}`);
-
   const pageData = await timedCache(getPageWithRetry, {
     cacheTime: blogConfig.NEXT_REVALIDATE_SECONDS,
   })(id);
@@ -24,9 +22,7 @@ export async function getPostBlocks(
     throw new Error("获取文章内容失败");
   }
 
-  const result = filterPostBlockMap(id, pageData, slice);
-  timer.end();
-  return result;
+  return filterPostBlockMap(id, pageData, slice);
 }
 
 /**
@@ -75,8 +71,6 @@ function filterPostBlockMap(
   blockMap: ExtendedRecordMap,
   slice?: number
 ): ExtendedRecordMap {
-  const timer = cpuTimer("filterPostBlockMap");
-
   // 浅拷贝顶层对象
   const result: ExtendedRecordMap = {
     ...blockMap,
@@ -118,7 +112,6 @@ function filterPostBlockMap(
     }
   }
 
-  timer.end();
   return result;
 }
 

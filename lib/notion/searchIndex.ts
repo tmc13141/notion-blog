@@ -1,6 +1,5 @@
 import { Page, ExtendedRecordMap, PageType, PageStatus } from "@/types/notion";
 import { getPostBlocks } from "@/lib/notion/getPostBlocks";
-import { cpuTimer } from "@/lib/cache";
 import blogConfig from "@/blog.config";
 
 /**
@@ -122,7 +121,6 @@ async function buildEntryForPost(post: Page): Promise<SearchIndexEntry> {
 async function buildSearchIndex(
   posts: Page[]
 ): Promise<Record<string, SearchIndexEntry>> {
-  const timer = cpuTimer("buildSearchIndex");
   const index: Record<string, SearchIndexEntry> = {};
 
   // 过滤只保留已发布的文章
@@ -145,7 +143,6 @@ async function buildSearchIndex(
     }
   }
 
-  timer.end();
   console.log(
     `[SearchIndex] Built index with ${Object.keys(index).length} entries`
   );
@@ -228,7 +225,6 @@ export async function searchWithIndex(
 
   if (!keyword) return [];
 
-  const timer = cpuTimer(`searchWithIndex:${keyword.slice(0, 10)}`);
   const lowerKeyword = keyword.toLowerCase().trim();
 
   // 获取缓存的搜索索引
@@ -326,7 +322,6 @@ export async function searchWithIndex(
     }
   }
 
-  timer.end();
   return results;
 }
 

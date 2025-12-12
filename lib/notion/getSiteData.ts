@@ -19,7 +19,7 @@ import {
 import { getConfig } from "@/lib/notion/getConfig";
 import { getPageProperties } from "@/lib/notion/getPagePropertie";
 import { getTags } from "@/lib/notion/getTags";
-import { timedCache, cpuTimer } from "@/lib/cache";
+import { timedCache } from "@/lib/cache";
 
 // ============================================================================
 // 基础数据获取（共享缓存）
@@ -38,8 +38,6 @@ interface BaseData {
  * 这是唯一会调用 Notion API 的地方（获取主数据库）
  */
 async function getBaseData(sitePageId: string): Promise<BaseData> {
-  const timer = cpuTimer("getBaseData");
-
   const pageRecordMap = await getPostBlocks(sitePageId);
 
   if (!pageRecordMap) {
@@ -71,8 +69,6 @@ async function getBaseData(sitePageId: string): Promise<BaseData> {
     pageRecordMap.collection_query,
     pageRecordMap.collection_view
   );
-
-  timer.end();
 
   return {
     pageRecordMap,
@@ -176,8 +172,6 @@ function normalizeSlugForIndex(slug: string, pageId: string): string {
 async function buildSlugIndex(
   sitePageId: string
 ): Promise<Record<string, SlugIndexEntry>> {
-  const timer = cpuTimer("buildSlugIndex");
-
   const { blockMap, schemaMap, pageIds, configPageIds } =
     await getCachedBaseData(sitePageId);
 
@@ -200,7 +194,6 @@ async function buildSlugIndex(
     }
   }
 
-  timer.end();
   console.log(`[Slug Index] Built with ${Object.keys(index).length} entries`);
 
   return index;
@@ -220,7 +213,6 @@ const getCachedSlugIndex = timedCache(buildSlugIndex, {
  * 2. 兜底路径：索引中没有时，回退到全量搜索（处理新增文章场景）
  */
 export async function getPostBySlug(slug: string): Promise<Page | null> {
-  const timer = cpuTimer(`getPostBySlug:${slug.slice(0, 20)}`);
   const sitePageId = idToUuid(blogConfig.NOTION_PAGE_ID);
 
   // 1. 快速路径：从缓存索引查找
@@ -233,11 +225,9 @@ export async function getPostBySlug(slug: string): Promise<Page | null> {
       // 只解析这一篇文章的完整属性
       const { blockMap, schemaMap } = await getCachedBaseData(sitePageId);
       const page = await getPageProperties(entry.pageId, blockMap, schemaMap);
-      timer.end();
       return page;
     }
     // 索引中有但不是已发布文章
-    timer.end();
     return null;
   }
 
@@ -267,7 +257,6 @@ export async function getPostBySlug(slug: string): Promise<Page | null> {
         page.status === PageStatus.Published
       ) {
         console.log(`[getPostBySlug] Fallback found: ${slug} → ${pageId}`);
-        timer.end();
         return page;
       }
     } catch {
@@ -275,7 +264,6 @@ export async function getPostBySlug(slug: string): Promise<Page | null> {
     }
   }
 
-  timer.end();
   return null;
 }
 
@@ -288,13 +276,11 @@ export async function getPostBySlug(slug: string): Promise<Page | null> {
  * 只加载配置数据，不加载文章列表
  */
 export async function getSiteConfig(): Promise<BlogConfig> {
-  const timer = cpuTimer("getSiteConfig");
   const sitePageId = idToUuid(blogConfig.NOTION_PAGE_ID);
 
   const { configPageIds } = await getCachedBaseData(sitePageId);
 
   const result = await getConfig(configPageIds);
-  timer.end();
 
   return result.config;
 }
@@ -306,7 +292,6 @@ export async function getPostList(): Promise<{
   posts: Page[];
   tagOptions: ReturnType<typeof getTags>;
 }> {
-  const timer = cpuTimer("getPostList");
   const sitePageId = idToUuid(blogConfig.NOTION_PAGE_ID);
 
   const { blockMap, schemaMap, pageIds, configPageIds } =
@@ -340,8 +325,6 @@ export async function getPostList(): Promise<{
   // 按日期排序
   posts.sort((a, b) => b.date - a.date);
 
-  timer.end();
-
   return {
     posts,
     tagOptions: getTags(posts, schemaMap),
@@ -352,7 +335,6 @@ export async function getPostList(): Promise<{
  * 获取导航页面列表
  */
 export async function getNavPages(): Promise<Page[]> {
-  const timer = cpuTimer("getNavPages");
   const sitePageId = idToUuid(blogConfig.NOTION_PAGE_ID);
 
   const { blockMap, schemaMap, pageIds, configPageIds } =
@@ -383,8 +365,6 @@ export async function getNavPages(): Promise<Page[]> {
       console.error(`获取页面属性失败，page_id: ${pageId}:`, error);
     }
   }
-
-  timer.end();
 
   return navPages.filter((p) => p.type === PageType.Page);
 }
