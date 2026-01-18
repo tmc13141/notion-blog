@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://json.schemastore.org/dependabot-2.0.json
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
+      timezone: "America/Los_Angeles"
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+      nextjs:
+        patterns:
+          - "next"
+          - "eslint-config-next"
+      radix-ui:
+        patterns:
+          - "@radix-ui/*"
+      tailwindcss:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+      notion:
+        patterns:
+          - "notion-client"
+          - "notion-utils"
+          - "react-notion-x"
+          - "notion-types"
